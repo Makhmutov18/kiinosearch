@@ -1,5 +1,5 @@
 /* ── State ────────────────────────────────────────────────── */
-let currentMode = 'random';
+let currentCategory = 'TOP_250_MOVIES';
 let currentGenreId = null;
 
 const GENRES = {
@@ -18,6 +18,7 @@ const loader = document.getElementById('loader');
 const movieCard = document.getElementById('movie-card');
 const errorEl = document.getElementById('error');
 const retryBtn = document.getElementById('retry-btn');
+const nextBtn = document.getElementById('next-btn');
 
 const poster = document.getElementById('poster');
 const ratingBadge = document.getElementById('rating-badge');
@@ -48,20 +49,20 @@ tabs.forEach(tab => {
     }
 
     genresPanel.classList.add('hidden');
-    currentMode = mode;
+    currentCategory = mode;
     currentGenreId = null;
-    loadMovie();
+    fetchMovie(currentCategory);
   });
 });
 
 /* ── Genre tags ──────────────────────────────────────────── */
 genreTags.forEach(tag => {
   tag.addEventListener('click', () => {
-    currentMode = 'genre';
+    currentCategory = 'genre';
     currentGenreId = parseInt(tag.dataset.id, 10);
     genresPanel.classList.add('hidden');
     tabs.forEach(t => t.classList.remove('active'));
-    loadMovie();
+    fetchMovie(currentCategory);
   });
 });
 
@@ -72,21 +73,33 @@ descToggle.addEventListener('click', () => {
 });
 
 /* ── Retry ───────────────────────────────────────────────── */
-retryBtn.addEventListener('click', loadMovie);
+retryBtn.addEventListener('click', () => fetchMovie(currentCategory));
 
-/* ── Load movie ──────────────────────────────────────────── */
-async function loadMovie() {
-  // Show loader, hide card & error
+/* ── Next button ─────────────────────────────────────────── */
+nextBtn.addEventListener('click', () => fetchMovie(currentCategory));
+
+/* ── Fetch movie ─────────────────────────────────────────── */
+async function fetchMovie(category) {
+  // Fade-out the card if visible
+  if (!movieCard.classList.contains('hidden')) {
+    movieCard.classList.add('fade-out');
+    await sleep(250);
+    movieCard.classList.add('hidden');
+    movieCard.classList.remove('fade-out');
+  }
+
+  // Show loader, hide error
   loader.classList.remove('hidden');
-  movieCard.classList.add('hidden');
   errorEl.classList.add('hidden');
 
   // Build URL
   let url = '/api/movies/random';
-  if (currentMode === 'genre' && currentGenreId) {
+  if (category === 'genre' && currentGenreId) {
     url += `?genre=${currentGenreId}`;
-  } else if (currentMode !== 'random') {
-    url += `?type=${currentMode}`;
+  } else if (category !== 'random' && category !== 'TOP_250_MOVIES') {
+    url += `?type=${category}`;
+  } else if (category === 'TOP_250_MOVIES') {
+    url += `?type=TOP_250_MOVIES`;
   }
 
   try {
@@ -107,7 +120,6 @@ async function loadMovie() {
 function renderMovie(movie) {
   loader.classList.add('hidden');
   errorEl.classList.add('hidden');
-  movieCard.classList.remove('hidden');
 
   // Poster
   poster.src = movie.posterUrl || movie.posterUrlPreview || '';
@@ -146,7 +158,6 @@ function renderMovie(movie) {
     descSection.classList.remove('collapsed');
     descToggle.textContent = 'Свернуть';
     descSection.style.display = '';
-    // If short enough, hide toggle
     if (desc.length <= 200) {
       descToggle.style.display = 'none';
     } else {
@@ -158,9 +169,19 @@ function renderMovie(movie) {
     descSection.style.display = 'none';
   }
 
+  // Fade-in the card
+  movieCard.classList.remove('hidden');
+  movieCard.classList.add('fade-in');
+  setTimeout(() => movieCard.classList.remove('fade-in'), 400);
+
   // Scroll to top smoothly
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* ── Utility ─────────────────────────────────────────────── */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /* ── Initial load ────────────────────────────────────────── */
-loadMovie();
+fetchMovie(currentCategory);

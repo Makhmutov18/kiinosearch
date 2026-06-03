@@ -161,9 +161,23 @@ html, body {
   display: none;
 }
 
+/* ── Fade transitions ───────────────────────────────────── */
+.movie-card.fade-out {
+  animation: fadeOut 0.25s ease forwards;
+}
+
+.movie-card.fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
 }
 
 .poster-wrapper {
@@ -293,4 +307,33 @@ html, body {
 .retry-btn:hover {
   background: var(--accent);
   color: var(--bg);
+}
+
+/* ── Next Button ────────────────────────────────────────── */
+.next-btn {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 20px auto 12px;
+  padding: 14px 24px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 0 12px rgba(163, 255, 71, 0.08), inset 0 0 12px rgba(163, 255, 71, 0.03);
+}
+
+.next-btn:hover {
+  background: var(--accent-dim);
+  box-shadow: 0 0 24px rgba(163, 255, 71, 0.2), inset 0 0 12px rgba(163, 255, 71, 0.06);
+}
+
+.next-btn:active {
+  transform: scale(0.97);
+  background: rgba(163, 255, 71, 0.08);
+  box-shadow: 0 0 8px rgba(163, 255, 71, 0.12);
 }
