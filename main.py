@@ -87,7 +87,7 @@ async def create_app() -> web.Application:
 
     # Static files
     app.router.add_get("/web-app", web_app_page)
-    app.router.add_static("/", path=str(STATIC_DIR), name="static")
+    app.router.add_static("/static", path=str(STATIC_DIR), name="static")
 
     return app
 
