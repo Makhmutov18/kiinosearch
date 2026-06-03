@@ -5,6 +5,7 @@ from aiogram import Bot, Dispatcher
 
 from config import settings
 from handlers.common import router as common_router
+from handlers.filters import router as filters_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,6 +20,7 @@ async def main() -> None:
     dp = Dispatcher()
 
     dp.include_router(common_router)
+    dp.include_router(filters_router)
 
     logger.info("Bot is starting...")
     await dp.start_polling(bot)

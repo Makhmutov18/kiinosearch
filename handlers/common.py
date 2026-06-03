@@ -6,6 +6,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 
 from services.kinopoisk import get_random_movie
+from handlers.filters import categories_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -101,4 +102,13 @@ async def random_movie(message: Message) -> None:
         caption,
         parse_mode="HTML",
         reply_markup=main_keyboard(),
+    )
+
+
+@router.message(F.text == "🍿 Фильтр по жанрам")
+async def filter_by_genre(message: Message) -> None:
+    """Handle the 'Фильтр по жанрам' button — show inline category keyboard."""
+    await message.answer(
+        "Выберите категорию или жанр:",
+        reply_markup=categories_keyboard(),
     )
