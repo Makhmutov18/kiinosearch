@@ -77,6 +77,11 @@ async def web_app_page(request: web.Request) -> web.Response:
     return web.FileResponse(html_path)
 
 
+async def redirect_to_webapp(request: web.Request) -> web.Response:
+    """Redirect / to /web-app."""
+    raise web.HTTPFound("/web-app")
+
+
 # ── App factory ────────────────────────────────────────────────────────────
 
 async def create_app() -> web.Application:
@@ -86,6 +91,7 @@ async def create_app() -> web.Application:
     app.router.add_get("/api/movies/random", api_random_movie)
 
     # Static files
+    app.router.add_get("/", redirect_to_webapp)
     app.router.add_get("/web-app", web_app_page)
     app.router.add_static("/static", path=str(STATIC_DIR), name="static")
 
