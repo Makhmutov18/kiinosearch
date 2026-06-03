@@ -44,6 +44,29 @@ async def _fetch_movie_details(session: aiohttp.ClientSession, movie_id: int) ->
     return await _fetch_json(session, detail_url)
 
 
+async def _fetch_trailer(session: aiohttp.ClientSession, movie_id: int) -> str | None:
+    """Fetch the first available YouTube or KINOPOISK_WIDGET trailer URL.
+
+    GET /api/v2.2/films/{id}/videos → items[] → find first with
+    site=YOUTUBE or site=KINOPOISK_WIDGET, return its url.
+    Returns None if no trailer found.
+    """
+    url = f"{BASE_URL}/films/{movie_id}/videos"
+    data = await _fetch_json(session, url)
+    if not data:
+        return None
+
+    items = data.get("items", [])
+    for video in items:
+        site = video.get("site", "").upper()
+        if site in ("YOUTUBE", "KINOPOISK_WIDGET"):
+            trailer_url = video.get("url")
+            if trailer_url:
+                return trailer_url
+
+    return None
+
+
 def _is_valid_movie(movie: dict[str, Any]) -> bool:
     """Check if the movie is valid for display.
 
@@ -85,7 +108,7 @@ async def _pick_and_enrich(
     items: list[dict[str, Any]],
     max_attempts: int = MAX_RETRIES,
 ) -> dict[str, Any] | None:
-    """Pick a random valid movie from items and enrich with details.
+    """Pick a random valid movie from items and enrich with details + trailer.
 
     Retries up to max_attempts times if the picked movie isn't valid.
     """
@@ -99,22 +122,45 @@ async def _pick_and_enrich(
         if not movie_id:
             continue
 
+        # Enrich with full details
         detail_data = await _fetch_movie_details(session, movie_id)
         if detail_data:
             movie.update(detail_data)
 
-        if _is_valid_movie(movie):
-            return movie
+        if not _is_valid_movie(movie):
+            logger.debug(
+                "Skipping invalid movie (attempt %d/%d): %s",
+                attempt + 1,
+                max_attempts,
+                movie.get("nameRu", movie_id),
+            )
+            continue
 
-        logger.debug(
-            "Skipping invalid movie (attempt %d/%d): %s",
-            attempt + 1,
-            max_attempts,
-            movie.get("nameRu", movie_id),
-        )
+        # Fetch trailer
+        trailer_url = await _fetch_trailer(session, movie_id)
+        movie["trailerUrl"] = trailer_url
+
+        return movie
 
     logger.warning("Exhausted %d attempts — no valid movie found in this batch", max_attempts)
     return None
+
+
+def _normalize_release_item(item: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a release endpoint item to match the standard movie format.
+
+    The v2.1/films/releases endpoint uses different field names:
+      - filmId       → kinopoiskId
+      - nameEn       → nameOriginal
+      - rating       → ratingKinopoisk
+      - ratingVoteCount → (kept as-is, not critical)
+    """
+    item["kinopoiskId"] = item.get("filmId") or item.get("kinopoiskId")
+    if "nameEn" in item and "nameOriginal" not in item:
+        item["nameOriginal"] = item["nameEn"]
+    if "rating" in item and "ratingKinopoisk" not in item:
+        item["ratingKinopoisk"] = item["rating"]
+    return item
 
 
 async def get_random_movie() -> dict[str, Any] | None:
@@ -184,6 +230,8 @@ async def get_recent_releases() -> dict[str, Any] | None:
 
     Uses the v2.1/films/releases endpoint with the current year and month.
     Falls back to the previous month if the current one has no results.
+    Normalises field names (filmId → kinopoiskId, nameEn → nameOriginal, etc.)
+    so the frontend receives the same JSON structure as other categories.
     """
     now = datetime.now()
     year = now.year
@@ -216,12 +264,10 @@ async def get_recent_releases() -> dict[str, Any] | None:
                 )
                 continue
 
-            # Normalize filmId → kinopoiskId (releases endpoint uses filmId)
-            for item in items:
-                if "filmId" in item and "kinopoiskId" not in item:
-                    item["kinopoiskId"] = item["filmId"]
+            # Normalise each item to standard field names
+            normalized = [_normalize_release_item(item) for item in items]
 
-            result = await _pick_and_enrich(session, items)
+            result = await _pick_and_enrich(session, normalized)
             if result:
                 return result
 

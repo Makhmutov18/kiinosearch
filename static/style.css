@@ -192,8 +192,9 @@ html, body {
 #poster {
   width: 100%;
   display: block;
-  aspect-ratio: 2/3;
-  object-fit: cover;
+  max-height: 380px;
+  object-fit: contain;
+  background: var(--surface);
 }
 
 .rating-badge {
@@ -309,12 +310,48 @@ html, body {
   color: var(--bg);
 }
 
+/* ── Action Buttons ────────────────────────────────────── */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ── Trailer Button ────────────────────────────────────── */
+.trailer-btn {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  padding: 12px 24px;
+  border: 1px solid #00bcd4;
+  border-radius: var(--radius);
+  background: rgba(0, 188, 212, 0.08);
+  color: #00e5ff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 0 12px rgba(0, 188, 212, 0.1), inset 0 0 12px rgba(0, 188, 212, 0.03);
+}
+
+.trailer-btn:hover {
+  background: rgba(0, 188, 212, 0.18);
+  box-shadow: 0 0 24px rgba(0, 188, 212, 0.25), inset 0 0 12px rgba(0, 188, 212, 0.06);
+}
+
+.trailer-btn:active {
+  transform: scale(0.97);
+  background: rgba(0, 188, 212, 0.05);
+  box-shadow: 0 0 8px rgba(0, 188, 212, 0.12);
+}
+
 /* ── Next Button ────────────────────────────────────────── */
 .next-btn {
   display: block;
   width: 100%;
   max-width: 320px;
-  margin: 20px auto 12px;
   padding: 14px 24px;
   border: 1px solid var(--accent);
   border-radius: var(--radius);

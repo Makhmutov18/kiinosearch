@@ -19,6 +19,7 @@ const movieCard = document.getElementById('movie-card');
 const errorEl = document.getElementById('error');
 const retryBtn = document.getElementById('retry-btn');
 const nextBtn = document.getElementById('next-btn');
+const trailerBtn = document.getElementById('trailer-btn');
 
 const poster = document.getElementById('poster');
 const ratingBadge = document.getElementById('rating-badge');
@@ -169,6 +170,15 @@ function renderMovie(movie) {
     }
   } else {
     descSection.style.display = 'none';
+  }
+
+  // Trailer button
+  if (movie.trailerUrl) {
+    trailerBtn.style.display = '';
+    trailerBtn.onclick = () => window.open(movie.trailerUrl, '_blank');
+  } else {
+    trailerBtn.style.display = 'none';
+    trailerBtn.onclick = null;
   }
 
   // Fade-in the card

@@ -44,6 +44,7 @@ def _serialize_movie(movie: dict) -> dict:
         "genres": movie.get("genres", []),
         "description": movie.get("description"),
         "shortDescription": movie.get("shortDescription"),
+        "trailerUrl": movie.get("trailerUrl"),
     }
 
 
