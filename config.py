@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     bot_token: str
     kp_api_key: str
+    app_url: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(
         env_file=".env",
