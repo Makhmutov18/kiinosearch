@@ -11,7 +11,7 @@ from aiogram.enums import ParseMode
 
 from config import settings
 from handlers.common import router as common_router
-from services.kinopoisk import get_random_movie, get_movie_by_criteria
+from services.kinopoisk import get_random_movie, get_movie_by_criteria, get_recent_releases
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,6 +26,25 @@ STATIC_DIR = Path(__file__).parent / "static"
 bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 dp.include_router(common_router)
+
+
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+def _serialize_movie(movie: dict) -> dict:
+    """Extract only the fields the frontend needs."""
+    return {
+        "kinopoiskId": movie.get("kinopoiskId"),
+        "nameRu": movie.get("nameRu"),
+        "nameOriginal": movie.get("nameOriginal"),
+        "year": movie.get("year"),
+        "posterUrl": movie.get("posterUrl"),
+        "posterUrlPreview": movie.get("posterUrlPreview"),
+        "ratingKinopoisk": movie.get("ratingKinopoisk"),
+        "ratingImdb": movie.get("ratingImdb"),
+        "genres": movie.get("genres", []),
+        "description": movie.get("description"),
+        "shortDescription": movie.get("shortDescription"),
+    }
 
 
 # ── API handlers ───────────────────────────────────────────────────────────
@@ -50,21 +69,21 @@ async def api_random_movie(request: web.Request) -> web.Response:
     if not movie:
         return web.json_response({"error": "No movie found"}, status=404)
 
-    # Serialize — keep only what the frontend needs
-    result = {
-        "kinopoiskId": movie.get("kinopoiskId"),
-        "nameRu": movie.get("nameRu"),
-        "nameOriginal": movie.get("nameOriginal"),
-        "year": movie.get("year"),
-        "posterUrl": movie.get("posterUrl"),
-        "posterUrlPreview": movie.get("posterUrlPreview"),
-        "ratingKinopoisk": movie.get("ratingKinopoisk"),
-        "ratingImdb": movie.get("ratingImdb"),
-        "genres": movie.get("genres", []),
-        "description": movie.get("description"),
-        "shortDescription": movie.get("shortDescription"),
-    }
-    return web.json_response(result)
+    return web.json_response(_serialize_movie(movie))
+
+
+async def api_recent_releases(request: web.Request) -> web.Response:
+    """GET /api/movies/recent — fetch a random recently released movie."""
+    try:
+        movie = await get_recent_releases()
+    except Exception as exc:
+        logger.exception("API error")
+        return web.json_response({"error": str(exc)}, status=500)
+
+    if not movie:
+        return web.json_response({"error": "No recent release found"}, status=404)
+
+    return web.json_response(_serialize_movie(movie))
 
 
 # ── Static file server ─────────────────────────────────────────────────────
@@ -89,6 +108,7 @@ async def create_app() -> web.Application:
 
     # API routes
     app.router.add_get("/api/movies/random", api_random_movie)
+    app.router.add_get("/api/movies/recent", api_recent_releases)
 
     # Static files
     app.router.add_get("/", redirect_to_webapp)

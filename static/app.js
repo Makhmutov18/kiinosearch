@@ -93,13 +93,15 @@ async function fetchMovie(category) {
   errorEl.classList.add('hidden');
 
   // Build URL
-  let url = '/api/movies/random';
-  if (category === 'genre' && currentGenreId) {
-    url += `?genre=${currentGenreId}`;
-  } else if (category !== 'random' && category !== 'TOP_250_MOVIES') {
-    url += `?type=${category}`;
+  let url;
+  if (category === 'recent') {
+    url = '/api/movies/recent';
+  } else if (category === 'genre' && currentGenreId) {
+    url = `/api/movies/random?genre=${currentGenreId}`;
   } else if (category === 'TOP_250_MOVIES') {
-    url += `?type=TOP_250_MOVIES`;
+    url = '/api/movies/random?type=TOP_250_MOVIES';
+  } else {
+    url = `/api/movies/random?type=${category}`;
   }
 
   try {
