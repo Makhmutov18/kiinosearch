@@ -1,9 +1,9 @@
 import logging
+from html import escape
 
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
-from aiogram.utils.html import escape
 
 from services.kinopoisk import get_random_movie
 
