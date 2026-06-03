@@ -1,0 +1,1 @@
+"""Service for interacting with the Kinopoisk Unofficial API."""
